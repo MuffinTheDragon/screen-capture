@@ -9,7 +9,7 @@ const Error = () => {
 			<div className="flex">
 				<div className="flex-shrink-0">
 					<svg
-						className="h-4 w-4 text-red-400 mt-0.5"
+						className="h-4 w-4 text-red-400 mt-1"
 						xmlns="http://www.w3.org/2000/svg"
 						width="16"
 						height="16"
@@ -20,12 +20,11 @@ const Error = () => {
 					</svg>
 				</div>
 				<div className="ml-4">
-					<h3 className="text-gray-800 font-semibold dark:text-white">
+					<h3 className="font-semibold text-white">
 						Invalid support
 					</h3>
-					<p className="mt-2 text-sm text-gray-700 dark:text-gray-400">
-						This device doesn&apos;t support display media
-						capabilities.
+					<p className="mt-2 text-sm text-gray-400">
+						This device does not support display media capabilities.
 					</p>
 				</div>
 			</div>

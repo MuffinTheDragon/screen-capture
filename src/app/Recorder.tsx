@@ -4,41 +4,6 @@ import fixWebmDuration from "fix-webm-duration";
 import Error from "./Error";
 
 export default function Recorder() {
-	/* async function startRecording() {
-    stream = await navigator.mediaDevices.getDisplayMedia({
-      video: true,
-      audio: true
-});
-recorder = new MediaRecorder(stream);
-
-const chunks = [];
-recorder.ondataavailable = e => chunks.push(e.data);
-recorder.onstop = e => {
-    const blob = new Blob(chunks, { type: chunks[0].type });
-    console.log(blob);
-    stream.getVideoTracks()[0].stop();
-
-    filename="yourCustomFileName"
-    if(window.navigator.msSaveOrOpenBlob) {
-        window.navigator.msSaveBlob(blob, filename);
-    }
-    else{
-        var elem = window.document.createElement('a');
-        elem.href = window.URL.createObjectURL(blob);
-        elem.download = filename;        
-        document.body.appendChild(elem);
-        elem.click();        
-        document.body.removeChild(elem);
-    }
-    };
-    recorder.start();
-}
-startRecording(); //Start of the recording 
-
------------
-
-recorder.stop() // End your recording by emitting this event
- */
 	const [videoURL, setVideoURL] = useState("");
 	const [status, setStatus] = useState("idle");
 	const [duration, setDuration] = useState(0);
@@ -157,7 +122,7 @@ recorder.stop() // End your recording by emitting this event
 	);
 
 	let gradientSquare =
-		"hover:cursor-pointer relative flex justify-center items-center w-32 h-32 bg-white rounded-xl before:absolute before:-inset-[2px] before:-z-[1] before:bg-gradient-to-br before:from-blue-600 before:via-transparent before:to-violet-600 before:rounded-xl dark:bg-slate-900";
+		"hover:cursor-pointer relative flex justify-center items-center w-32 h-32 bg-white rounded-xl before:absolute before:-inset-[2px] before:-z-[1] before:bg-gradient-to-br before:from-blue-600 before:via-transparent before:to-violet-600 before:rounded-xl bg-slate-900";
 
 	if (status !== "paused") gradientSquare += " box";
 
@@ -187,7 +152,7 @@ recorder.stop() // End your recording by emitting this event
 							onChange={() => setUseMic(!useMic)}
 							type="checkbox"
 							id="hs-basic-usage"
-							className="relative w-[3.25rem] h-7 bg-gray-100 checked:bg-none checked:bg-blue-600 border-2 rounded-full cursor-pointer transition-colors ease-in-out duration-200 border-transparent ring-1 ring-transparent ring-offset-white focus:outline-none appearance-none dark:bg-gray-700 dark:checked:bg-blue-600 dark:focus:ring-offset-gray-800 before:inline-block before:w-6 before:h-6 before:bg-white checked:before:bg-blue-200 before:translate-x-0 checked:before:translate-x-full before:shadow before:rounded-full before:transform before:ring-0 before:transition before:ease-in-out before:duration-200 dark:before:bg-gray-400 dark:checked:before:bg-blue-200"
+							className="relative w-[3.25rem] h-7 checked:bg-none border-2 rounded-full cursor-pointer transition-colors ease-in-out duration-200 border-transparent ring-1 ring-transparent ring-offset-white focus:outline-none appearance-none bg-gray-700 checked:bg-blue-600 focus:ring-offset-gray-800 before:inline-block before:w-6 before:h-6 before:translate-x-0 checked:before:translate-x-full before:shadow before:rounded-full before:transform before:ring-0 before:transition before:ease-in-out before:duration-200 before:bg-gray-400 checked:before:bg-blue-200"
 						/>
 					</div>
 					<div className="text-center text-sm mt-1">Use mic?</div>
