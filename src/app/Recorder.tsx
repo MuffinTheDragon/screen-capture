@@ -51,7 +51,7 @@ recorder.stop() // End your recording by emitting this event
 
 	useEffect(() => {
 		// check if device is compatible
-		if (!navigator.mediaDevices) setShowError(true);
+		if (!navigator?.mediaDevices?.getDisplayMedia) setShowError(true);
 	}, []);
 
 	useEffect(() => {
