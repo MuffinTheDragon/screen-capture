@@ -1,13 +1,25 @@
-import { use, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import RecordRTC from "recordrtc";
 import fixWebmDuration from "fix-webm-duration";
 import Error from "./Error";
+import { FFmpeg } from "@ffmpeg/ffmpeg";
+import { toBlobURL, fetchFile } from "@ffmpeg/util";
+import { worker_script } from "./timer";
+import { InformationCircleIcon } from "@heroicons/react/24/outline";
+import { QuestionMarkCircleIcon } from "@heroicons/react/24/solid";
+
+const timer = new Worker(worker_script);
 
 export default function Recorder() {
 	const [videoURL, setVideoURL] = useState("");
 	const [status, setStatus] = useState("idle");
 	const [duration, setDuration] = useState(0);
+	const durationRef = useRef(0);
 	const [useMic, setUseMic] = useState(false);
+
+	const ffmpegRef = useRef(new FFmpeg());
+	const [mp4URL, setMp4URL] = useState(null);
+	const [converting, setConverting] = useState(false);
 
 	const [showError, setShowError] = useState(false);
 
@@ -20,34 +32,82 @@ export default function Recorder() {
 	}, []);
 
 	useEffect(() => {
-		let interval: NodeJS.Timer;
-		if (status === "recording")
-			interval = setInterval(() => setDuration(duration + 1), 1000);
+		const load = async () => {
+			const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd";
+			const ffmpeg = ffmpegRef.current;
+			ffmpeg.on("log", ({ message }) => {
+				console.log(message);
+			});
+			// toBlobURL is used to bypass CORS issue, urls with the same
+			// domain can be used directly.
+			await ffmpeg.load({
+				coreURL: await toBlobURL(
+					`${baseURL}/ffmpeg-core.js`,
+					"text/javascript"
+				),
+				wasmURL: await toBlobURL(
+					`${baseURL}/ffmpeg-core.wasm`,
+					"application/wasm"
+				),
+			});
+		};
 
-		return () => clearInterval(interval);
-	}, [status, duration]);
+		load();
+	}, []);
+
+	useEffect(() => {
+		timer.onmessage = ({ data: { time } }) => {
+			setDuration(time);
+			durationRef.current = time;
+		};
+	}, []);
 
 	const stopRecording = () => {
 		recorder.current?.stopRecording(() => {
+			timer.postMessage({ turn: "off" });
 			fixWebmDuration(
 				recorder.current!.getBlob(),
-				duration * 1000,
+				durationRef.current * 1000,
 				(newBlob) => setVideoURL(URL.createObjectURL(newBlob))
 			);
 			stream?.getTracks().map((track) => track.stop());
+			setStatus("stopped");
+			setDuration(0);
+			durationRef.current = 0;
 		});
-		setStatus("stopped");
-		setDuration(0);
+	};
+
+	const convertToMp4 = async () => {
+		setConverting(true);
+		const ffmpeg = ffmpegRef.current;
+		await ffmpeg.writeFile("input.webm", await fetchFile(videoURL));
+		await ffmpeg.exec([
+			"-i",
+			"input.webm",
+			// "-vf",
+			// "fps=15,scale=1200:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse",
+			"-c",
+			"copy",
+			"output.mp4",
+		]);
+		const data = await ffmpeg.readFile("output.mp4");
+		setMp4URL(
+			// @ts-ignore
+			URL.createObjectURL(new Blob([data.buffer], { type: "video/mp4" }))
+		);
+		setConverting(false);
 	};
 
 	const pauseRecording = () => {
 		recorder.current?.pauseRecording();
 		setStatus("paused");
+		timer.postMessage({ turn: "pause" });
 	};
 
 	const resumeRecording = () => {
 		recorder.current?.resumeRecording();
 		setStatus("recording");
+		timer.postMessage({ turn: "on" });
 	};
 
 	const startRecording = async () => {
@@ -102,12 +162,15 @@ export default function Recorder() {
 		// when ending capture using browser component
 		const screenCapture = _screenStream.getVideoTracks()[0];
 		if (screenCapture) {
-			screenCapture.addEventListener("ended", () => stopRecording());
+			screenCapture.addEventListener("ended", () => {
+				stopRecording();
+			});
 		}
 
 		recorder.current.startRecording();
 		setStream(_screenStream);
 		setStatus("recording");
+		timer.postMessage({ turn: "on" });
 	};
 
 	const hours = Math.floor(duration / 3600);
@@ -122,7 +185,7 @@ export default function Recorder() {
 	);
 
 	let gradientSquare =
-		"hover:cursor-pointer relative flex justify-center items-center w-32 h-32 bg-white rounded-xl before:absolute before:-inset-[2px] before:-z-[1] before:bg-gradient-to-br before:from-blue-600 before:via-transparent before:to-violet-600 before:rounded-xl bg-slate-900";
+		"hover:cursor-pointer relative flex justify-center items-center w-32 h-32 rounded-xl before:absolute before:-inset-[2px] before:-z-[1] before:bg-gradient-to-br before:from-blue-600 before:via-transparent before:to-violet-600 before:rounded-xl bg-slate-900";
 
 	if (status !== "paused") gradientSquare += " box";
 
@@ -152,10 +215,20 @@ export default function Recorder() {
 							onChange={() => setUseMic(!useMic)}
 							type="checkbox"
 							id="hs-basic-usage"
-							className="relative w-[3.25rem] h-7 checked:bg-none border-2 rounded-full cursor-pointer transition-colors ease-in-out duration-200 border-transparent ring-1 ring-transparent ring-offset-white focus:outline-none appearance-none bg-gray-700 checked:bg-blue-600 focus:ring-offset-gray-800 before:inline-block before:w-6 before:h-6 before:translate-x-0 checked:before:translate-x-full before:shadow before:rounded-full before:transform before:ring-0 before:transition before:ease-in-out before:duration-200 before:bg-gray-400 checked:before:bg-blue-200"
+							className="switch"
 						/>
 					</div>
-					<div className="text-center text-sm mt-1">Use mic?</div>
+					<div className="text-center text-sm mt-1 flex items-center justify-center ps-3">
+						Use mic
+						<div className="px-1 hover:cursor-pointer group">
+							<QuestionMarkCircleIcon className="w-5 h-5 hover:cursor-pointer" />
+							<div className="opacity-0 transition ease-in-out group-hover:opacity-100 duration-300 mt-2 -ms-[165px] absolute z-50 whitespace-normal break-words rounded-md py-1.5 px-3 font-sans text-sm font-normal bg-gray-700 text-white focus:outline-none">
+								You can&apos;t record both mic and system audio.
+								<br />
+								If both are selected, mic audio is prioritized.
+							</div>
+						</div>
+					</div>
 				</div>
 			) : null}
 
@@ -243,20 +316,91 @@ export default function Recorder() {
 
 			{/* render when no longer recording */}
 			{status && status === "stopped" ? (
-				<div className="grid shadow-lg">
-					<video
-						src={videoURL}
-						className="bg-black rounded-xl max-h-[75vh] w-[75vw]"
-						controls
-						loop
-						autoPlay
-					/>
-					<button
-						onClick={() => setStatus("idle")}
-						className="hover:bg-blue-700 px-4 py-2 font-semibold text-sm bg-blue-600 mt-5 text-white rounded-md shadow-sm"
+				<div>
+					<div
+						className="flex items-center space-x-1 justify-center p-4 mb-4 text-sm rounded-md bg-gray-800 text-blue-400"
+						role="alert"
 					>
-						Restart
-					</button>
+						<InformationCircleIcon className="w-4 h-4" />
+						<span className="font-medium ">
+							The recording may not play with the default Windows
+							apps. You can always play the recording in your
+							browser or using VLC.
+						</span>
+					</div>
+					<div className="grid shadow-lg">
+						<video
+							src={videoURL}
+							className="bg-black rounded-md max-h-[75vh] w-[75vw]"
+							controls
+							loop
+							autoPlay
+						/>
+					</div>
+					<div>
+						<div className="flex justify-between mt-5">
+							<div className="space-x-2">
+								<button className="hover:bg-blue-700 px-4 py-2 font-semibold text-sm bg-blue-600 text-white rounded-md shadow-sm">
+									<a
+										href={videoURL}
+										download={`Recording - ${new Date().toDateString()}`}
+									>
+										Download source (.webm)
+									</a>
+								</button>
+								<button
+									onClick={() =>
+										!mp4URL ? convertToMp4() : null
+									}
+									disabled={converting}
+									className="disabled:cursor-not-allowed disabled:opacity-50 hover:bg-gray-700 px-4 py-2 rounded-md font-semibold text-sm shadow-sm"
+								>
+									{converting && (
+										<p className="inline-flex">
+											<svg
+												className="animate-spin -ml-1 mr-3 h-4 w-4 text-white"
+												viewBox="0 0 24 24"
+											>
+												<circle
+													className="opacity-25"
+													cx="12"
+													cy="12"
+													r="10"
+													strokeWidth="4"
+												></circle>
+												<path
+													className="opacity-75"
+													fill="currentColor"
+													d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+												></path>
+											</svg>
+											Converting...
+										</p>
+									)}
+									{!converting && !mp4URL && (
+										<p>Convert to MP4</p>
+									)}
+									{mp4URL && (
+										<a
+											href={mp4URL}
+											download={`Recording - ${new Date().toDateString()}`}
+										>
+											Download MP4
+										</a>
+									)}
+								</button>
+							</div>
+							<button
+								onClick={() => {
+									setStatus("idle");
+									setMp4URL(null);
+								}}
+								className="bg-red-500 hover:bg-red-700 px-4 py-2 rounded-md font-semibold text-sm shadow-sm"
+							>
+								Restart
+							</button>
+						</div>
+					</div>
 				</div>
 			) : null}
 		</div>
