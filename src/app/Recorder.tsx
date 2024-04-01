@@ -338,16 +338,15 @@ export default function Recorder() {
 						/>
 					</div>
 					<div>
-						<div className="flex justify-between mt-5">
-							<div className="space-x-2">
-								<button className="hover:bg-blue-700 px-4 py-2 font-semibold text-sm bg-blue-600 text-white rounded-md shadow-sm">
-									<a
-										href={videoURL}
-										download={`Recording - ${new Date().toDateString()}`}
-									>
-										Download source (.webm)
-									</a>
-								</button>
+						<div className="flex items-center justify-between mt-5">
+							<div>
+								<a
+									className="hover:bg-blue-700 px-4 py-2 font-semibold text-sm bg-blue-600 text-white rounded-md shadow-sm me-2"
+									href={videoURL}
+									download={`Recording - ${new Date().toDateString()}`}
+								>
+									Download source (.webm)
+								</a>
 								<button
 									onClick={() =>
 										!mp4URL ? convertToMp4() : null
@@ -395,7 +394,7 @@ export default function Recorder() {
 									setStatus("idle");
 									setMp4URL(null);
 								}}
-								className="bg-red-500 hover:bg-red-700 px-4 py-2 rounded-md font-semibold text-sm shadow-sm"
+								className="bg-red-500 hover:bg-red-700 px-4 py-[7px] mt-[1px] rounded-md font-semibold text-sm shadow-sm"
 							>
 								Restart
 							</button>
