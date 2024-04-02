@@ -220,9 +220,9 @@ export default function Recorder() {
 					</div>
 					<div className="text-center text-sm mt-1 flex items-center justify-center ps-3">
 						Use mic
-						<div className="px-1 hover:cursor-pointer group">
+						<div className="px-1 hover:cursor-pointer has-tooltip group">
 							<QuestionMarkCircleIcon className="w-5 h-5 hover:cursor-pointer" />
-							<div className="opacity-0 transition ease-in-out group-hover:opacity-100 duration-300 mt-2 -ms-[165px] absolute z-50 whitespace-normal break-words rounded-md py-1.5 px-3 font-sans text-sm font-normal bg-gray-700 text-white focus:outline-none">
+							<div className="tooltip opacity-0 transition ease-in-out group-hover:opacity-100 duration-300 mt-2 -ms-[165px] absolute z-50 whitespace-normal break-words rounded-md py-1.5 px-3 font-sans text-sm font-normal bg-gray-700 text-white focus:outline-none">
 								You can&apos;t record both mic and system audio.
 								<br />
 								If both are selected, mic audio is prioritized.
@@ -341,53 +341,55 @@ export default function Recorder() {
 						<div className="flex items-center justify-between mt-5">
 							<div>
 								<a
-									className="hover:bg-blue-700 px-4 py-2 font-semibold text-sm bg-blue-600 text-white rounded-md shadow-sm me-2"
+									className="hover:bg-blue-700 px-4 py-[8px] font-semibold text-sm bg-blue-600 text-white rounded-md shadow-sm me-2"
 									href={videoURL}
 									download={`Recording - ${new Date().toDateString()}`}
 								>
 									Download source (.webm)
 								</a>
-								<button
-									onClick={() =>
-										!mp4URL ? convertToMp4() : null
-									}
-									disabled={converting}
-									className="disabled:cursor-not-allowed disabled:opacity-50 hover:bg-gray-700 px-4 py-2 rounded-md font-semibold text-sm shadow-sm"
-								>
-									{converting && (
-										<p className="inline-flex">
-											<svg
-												className="animate-spin -ml-1 mr-3 h-4 w-4 text-white"
-												viewBox="0 0 24 24"
-											>
-												<circle
-													className="opacity-25"
-													cx="12"
-													cy="12"
-													r="10"
-													strokeWidth="4"
-												></circle>
-												<path
-													className="opacity-75"
-													fill="currentColor"
-													d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-												></path>
-											</svg>
-											Converting...
-										</p>
-									)}
-									{!converting && !mp4URL && (
-										<p>Convert to MP4</p>
-									)}
-									{mp4URL && (
-										<a
-											href={mp4URL}
-											download={`Recording - ${new Date().toDateString()}`}
-										>
-											Download MP4
-										</a>
-									)}
-								</button>
+								{mp4URL ? (
+									<a
+										className="hover:bg-gray-700 px-4 py-[8px] rounded-md font-semibold text-sm shadow-sm"
+										href={mp4URL}
+										download={`Recording - ${new Date().toDateString()}`}
+									>
+										Download MP4
+									</a>
+								) : (
+									<button
+										onClick={() =>
+											!mp4URL ? convertToMp4() : null
+										}
+										disabled={converting}
+										className="disabled:cursor-not-allowed disabled:opacity-50 hover:bg-gray-700 px-4 py-[7px] rounded-md font-semibold text-sm shadow-sm"
+									>
+										{converting && (
+											<p className="inline-flex">
+												<svg
+													className="animate-spin -ml-1 mr-3 h-4 w-4 text-white"
+													viewBox="0 0 24 24"
+												>
+													<circle
+														className="opacity-25"
+														cx="12"
+														cy="12"
+														r="10"
+														strokeWidth="4"
+													></circle>
+													<path
+														className="opacity-75"
+														fill="currentColor"
+														d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+													></path>
+												</svg>
+												Converting...
+											</p>
+										)}
+										{!converting && !mp4URL && (
+											<p>Convert to MP4</p>
+										)}
+									</button>
+								)}
 							</div>
 							<button
 								onClick={() => {

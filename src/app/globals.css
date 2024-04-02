@@ -35,6 +35,14 @@ body {
   animation: 2s rotate linear infinite;
 }
 
+.tooltip {
+  @apply invisible absolute;
+}
+
+.has-tooltip:hover .tooltip {
+  @apply visible z-50;
+}
+
 .switch {
   @apply relative w-[3.25rem] h-7 checked:bg-none border-2 rounded-full cursor-pointer transition-colors ease-in-out duration-200 border-transparent ring-1 ring-transparent ring-offset-white focus:outline-none appearance-none bg-gray-700 checked:bg-blue-600 focus:ring-offset-gray-800 before:inline-block before:w-6 before:h-6 before:translate-x-0 checked:before:translate-x-full before:shadow before:rounded-full before:transform before:ring-0 before:transition before:ease-in-out before:duration-200 before:bg-gray-400 checked:before:bg-blue-200
 
