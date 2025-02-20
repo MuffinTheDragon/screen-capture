@@ -1,3 +1,6 @@
+# Intro
+This is simple web app that is able to screen / mic record. Powered by the screen capture api:  https://developer.mozilla.org/en-US/docs/Web/API/Screen_Capture_API
+
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started
